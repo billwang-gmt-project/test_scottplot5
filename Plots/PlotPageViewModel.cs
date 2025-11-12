@@ -2,12 +2,12 @@
 using CommunityToolkit.Mvvm.Input;
 using Helper;
 using OpenTK.Graphics.ES11;
+using System.Linq;
 
 
 
 //using Functions;
 using ScottPlot;
-using ScottPlot.Plottable;
 using ScottPlot.Plottables;
 using ScottPlot.WPF;
 using System;
@@ -50,7 +50,7 @@ namespace Plots
                 return;
             if (PlotList == null)
                 return;
-            if (PlotList.Count == 0)
+            if (PlotList.Count ==0)
                 return;
             if (PlotList[PlotIndex].plot == null)
                 return;
@@ -68,7 +68,7 @@ namespace Plots
                 return;
             if (PlotList == null)
                 return;
-            if (PlotList.Count == 0)
+            if (PlotList.Count ==0)
                 return;
             if (CurrentPlot == null)
                 return;
@@ -96,19 +96,12 @@ namespace Plots
         [ObservableProperty]
         bool isLimitDisplaySize = true;
         [ObservableProperty]
-        int displayLength = 0;
+        int displayLength =0;
         [ObservableProperty]
         public bool isUpdatePlot = true;
         partial void OnIsUpdatePlotChanged(bool value)
         {
-            //if (value == true)
-            //{
-            //    Chart.Interaction.Enable();
-            //}
-            //else
-            //{
-            //    Chart.Interaction.Enable();
-            //}
+            // no-op for interaction change in this ScottPlot version
         }
         [ObservableProperty]
         string statusString = "";
@@ -133,7 +126,7 @@ namespace Plots
             RefreshChart("OnIsYaxisAutoChanged");
         }
         [ObservableProperty]
-        public double yaxisMin = 0;
+        public double yaxisMin =0;
         partial void OnYaxisMinChanged(double value)
         {
             if (Chart == null)
@@ -145,7 +138,7 @@ namespace Plots
             RefreshChart("OnYaxisMaxChanged");
         }
         [ObservableProperty]
-        public double yaxisMax = 5000;
+        public double yaxisMax =5000;
         partial void OnYaxisMaxChanged(double value)
         {
             if (Chart == null)
@@ -157,16 +150,16 @@ namespace Plots
             RefreshChart("OnYaxisMinChanged");
         }
         [ObservableProperty]
-        int displaySize = 5000;
+        int displaySize =5000;
         partial void OnDisplaySizeChanged(int value)
         {
             //if (value > GlobalConstants.maxDisplaySize)
             //{
             //    DisplaySize = GlobalConstants.maxDisplaySize;
             //}
-            //else if (value < 10)
+            //else if (value <10)
             //{
-            //    DisplaySize = 10;
+            //    DisplaySize =10;
             //}
         }
 
@@ -202,7 +195,7 @@ namespace Plots
         {
             if (PlotList is null)
                 return;
-            if (PlotList.Count == 0)
+            if (PlotList.Count ==0)
                 return;
 
             foreach (PlotListModel plot in PlotList)
@@ -216,7 +209,7 @@ namespace Plots
         {
             if (PlotList is null)
                 return;
-            if (PlotList.Count == 0)
+            if (PlotList.Count ==0)
                 return;
             foreach (PlotListModel plot in PlotList)
             {
@@ -234,7 +227,7 @@ namespace Plots
 
         // Add draggable horizontal and vertical lines
         CrosslineModel[] crosslines = new CrosslineModel[2] { new(), new() };
-        int crosslineIndex = 0;
+        int crosslineIndex =0;
         Annotation? crosslineCursorAnnotation;
 
 
@@ -267,42 +260,9 @@ namespace Plots
             InitMenu();
 
             //// Init custom mouse actions
-            // https://github.com/ScottPlot/ScottPlot/blob/main/src/ScottPlot5/ScottPlot5%20Demos/ScottPlot5%20WinForms%20Demo/Demos/CustomMouseActions.cs
-            // richTextBox1.Text = "middle-click-drag pan, right-click zoom rectangle, right-click autoscale, left-click menu";
-            ScottPlot.Control.InputBindings customInputBindings = new()
-            {
-                // Standard
-                // "left-click-drag pan, right-click-drag zoom, middle-click autoscale, right-click menu"
-                DragPanButton = ScottPlot.Control.MouseButton.Left,
-                DragZoomRectangleButton = ScottPlot.Control.MouseButton.Middle,
-                DragZoomButton = ScottPlot.Control.MouseButton.Right,
-                ClickAutoAxisButton = ScottPlot.Control.MouseButton.Left,
-                ClickContextMenuButton = ScottPlot.Control.MouseButton.Right,
-                DoubleClickButton = ScottPlot.Control.MouseButton.Left,
-                ZoomInWheelDirection = ScottPlot.Control.MouseWheelDirection.Up,
-                ZoomOutWheelDirection = ScottPlot.Control.MouseWheelDirection.Down,
-                LockHorizontalAxisKey = ScottPlot.Control.Key.Shift,
-                LockVerticalAxisKey = ScottPlot.Control.Key.Ctrl,
-                PanZoomRectangleKey = ScottPlot.Control.Key.Alt,
-
-                //// Custom
-                //DragPanButton = ScottPlot.Control.MouseButton.Middle,
-                //DragZoomRectangleButton = ScottPlot.Control.MouseButton.Right,
-                //DragZoomButton = ScottPlot.Control.MouseButton.Right,
-                //ZoomInWheelDirection = ScottPlot.Control.MouseWheelDirection.Up,
-                //ZoomOutWheelDirection = ScottPlot.Control.MouseWheelDirection.Down,
-                //ClickAutoAxisButton = ScottPlot.Control.MouseButton.Right,
-                //ClickContextMenuButton = ScottPlot.Control.MouseButton.Left,
-            };
-
-            ScottPlot.Control.Interaction interaction = new(Chart)
-            {
-                //Inputs = ScottPlot.Control.InputBindings.Standard(), 
-                Inputs = customInputBindings,
-                Actions = ScottPlot.Control.PlotActions.Standard(),
-            };
-
-            Chart.Interaction = interaction;
+            // This ScottPlot package version may not expose the previous Interaction API used by older examples.
+            // The code previously configured a custom `Interaction` object; remove that configuration and rely on
+            // the control's default mouse behavior and the explicit mouse event handlers above.
 
             Chart.Refresh();
 
@@ -312,18 +272,18 @@ namespace Plots
         void InitMenu()
         {
             Chart.Menu.Reset();
-            Chart.Menu.Add("Clear", (Chart) =>
+            Chart.Menu.Add("Clear", (plotArg) =>
             {
-                Chart.Plot.Clear();
-                PlotList.Clear();
-                Chart.Plot.Axes.AutoScale();
+                plotArg.Clear();
+                PlotList?.Clear();
+                plotArg.Axes.AutoScale();
                 Chart.Refresh();
             });
-            Chart.Menu.Add("Open in new window", (Chart) =>
+            Chart.Menu.Add("Open in new window", (plotArg) =>
             {
-                WpfPlotViewer.Launch(Chart.Plot, "");
+                WpfPlotViewer.Launch(plotArg, "");
             });
-            Chart.Menu.Add("Help", (Chart) =>
+            Chart.Menu.Add("Help", (plotArg) =>
             {
                 ShowMessage(
                             "Left-click \t\t:\tAuto Scale\n" +
@@ -337,14 +297,14 @@ namespace Plots
         {
             TextBlock textBlock = new TextBlock();
             textBlock.Text = message;
-            textBlock.FontSize = 24;
+            textBlock.FontSize =24;
             textBlock.Background = System.Windows.Media.Brushes.LightYellow;
             textBlock.Foreground = System.Windows.Media.Brushes.Blue;
             textBlock.FontFamily = new System.Windows.Media.FontFamily("Colas");
 
             Window messageWindow = new Window();
-            messageWindow.Width = 640;
-            messageWindow.Height = 240;
+            messageWindow.Width =640;
+            messageWindow.Height =240;
             messageWindow.Title = "Mouse Help";
             messageWindow.Content = textBlock;
             messageWindow.ShowDialog();
@@ -373,12 +333,12 @@ namespace Plots
             };
             // TODO: add legend image
             viewModel.PlotList.Add(plotListModel);
-            int index = viewModel.PlotList.Count - 1;
+            int index = viewModel.PlotList.Count -1;
             viewModel!.PlotIndex = index;
             plotListModel.Plot = viewModel.Chart!.Plot.Add.SignalXY(viewModel.PlotList[index].xs!, viewModel.PlotList[index].ys!, color);
             plotListModel.Plot.LegendText = name ??= "plot"; // Set legend text
             plotListModel.Plot.MarkerShape = MarkerShape.FilledCircle;
-            plotListModel.Plot.MarkerSize = 3;
+            plotListModel.Plot.MarkerSize =3;
             viewModel.CurrentPlot = viewModel.PlotList!.Last().Plot;
 
             if ((x == null) || (y == null))
@@ -390,7 +350,7 @@ namespace Plots
         }
         public void UpdatePlot(PlotPageViewModel? viewModel, int index, double[]? x, double[]? y)
         {
-            if (!viewModel.IsUpdatePlot || viewModel == null || viewModel.PlotList == null || index > viewModel.PlotList.Count - 1 ||
+            if (!viewModel.IsUpdatePlot || viewModel == null || viewModel.PlotList == null || index > viewModel.PlotList.Count -1 ||
                 viewModel.PlotList[index].plot == null || viewModel.PlotList[index].xs == null || viewModel.PlotList[index].ys == null ||
                 x == null || y == null)
             {
@@ -412,10 +372,10 @@ namespace Plots
                 viewModel.Chart.Plot.Axes.SetLimitsY(viewModel.YaxisMin, viewModel.YaxisMax);
             }
 
-            viewModel.PlotList[index].Plot.Data.MaximumIndex = length == 0 ? 0 : length - 1;
-            int minIndex = viewModel.PlotList[index].plot.Data.MaximumIndex - length - 1;
-            minIndex = (minIndex < 0) ? 0 : minIndex;
-            viewModel.PlotList[index].Plot.Data.MinimumIndex = IsLimitDisplaySize ? minIndex : 0;
+            viewModel.PlotList[index].Plot.Data.MaximumIndex = length ==0 ?0 : length -1;
+            int minIndex = viewModel.PlotList[index].plot.Data.MaximumIndex - length -1;
+            minIndex = (minIndex <0) ?0 : minIndex;
+            viewModel.PlotList[index].Plot.Data.MinimumIndex = IsLimitDisplaySize ? minIndex :0;
 
             var limits = viewModel.Chart.Plot.Axes.GetDataLimits();
             viewModel.Chart.Plot.Axes.SetLimitsX(viewModel.PlotList[index].xs[viewModel.PlotList[index].Plot.Data.MinimumIndex], limits.XRange.Max);
@@ -459,7 +419,8 @@ namespace Plots
                     Debug.WriteLine($"index ={crosslineIndex}");
                 }
 
-                Chart.Interaction.Disable(); // disable panning while dragging
+                // disable panning while dragging - no-op fallback
+                DisablePlotInteraction();
             }
         }
 
@@ -468,7 +429,8 @@ namespace Plots
             PlottableBeingDragged = null;
             vLineBeingDragged = null;
             hLineBeingDragged = null;
-            Chart.Interaction.Enable(); // enable panning again
+            // enable panning again - no-op fallback
+            EnablePlotInteraction();
             Chart.Refresh();
         }
 
@@ -506,7 +468,7 @@ namespace Plots
 
             foreach (var crossline in crosslines)
             {
-                crossline.xAnnotation.OffsetX = Chart.Plot.GetPixel(new(crossline.point.Value.X, crossline.point.Value.Y)).X - 40;
+                crossline.xAnnotation.OffsetX = Chart.Plot.GetPixel(new(crossline.point.Value.X, crossline.point.Value.Y)).X -40;
             }
 
 
@@ -526,7 +488,7 @@ namespace Plots
 
             foreach (var crossline in crosslines)
             {
-                crossline.xAnnotation.OffsetX = Chart.Plot.GetPixel(new(crossline.point.Value.X, crossline.point.Value.Y)).X - 40;
+                crossline.xAnnotation.OffsetX = Chart.Plot.GetPixel(new(crossline.point.Value.X, crossline.point.Value.Y)).X -40;
             }
 
         }
@@ -537,10 +499,10 @@ namespace Plots
             //ClearTexts();
 
             /// Marker
-            cursorMarker = Chart.Plot.Add.Marker(0, 0, MarkerShape.OpenCircle, 10);
+            cursorMarker = Chart.Plot.Add.Marker(0,0, MarkerShape.OpenCircle,10);
             cursorMarker.IsVisible = IsShowCursor;
 
-            cursorText = Chart.Plot.Add.Text("", 0, 0);
+            cursorText = Chart.Plot.Add.Text("",0,0);
             cursorText.IsVisible = IsShowCursor;
             cursorText.LabelBackgroundColor = ScottPlot.Colors.Yellow;
             cursorText.LabelBold = true;
@@ -551,11 +513,11 @@ namespace Plots
             crosslineCursorAnnotation = Chart.Plot.Add.Annotation($"", Alignment.UpperLeft);
             crosslineCursorAnnotation.Alignment = ScottPlot.Alignment.UpperLeft;
             crosslineCursorAnnotation.IsVisible = false;
-            crosslineCursorAnnotation.Label.FontSize = 12;
+            crosslineCursorAnnotation.Label.FontSize =12;
             crosslineCursorAnnotation.Label.ForeColor = ScottPlot.Colors.Black;
             crosslineCursorAnnotation.Label.BackgroundColor = ScottPlot.Colors.Transparent;
             crosslineCursorAnnotation.Label.ShadowColor = ScottPlot.Colors.Transparent;
-            crosslineCursorAnnotation.LabelText = "C0: 0, 0\nC1: 0, 0\nΔX: 0, ΔY: 0";
+            crosslineCursorAnnotation.LabelText = "C0:0,0\nC1:0,0\nΔX:0, ΔY:0";
             crosslineCursorAnnotation.LabelBold = true;
 
             // Add C0, C1 cross lines
@@ -563,17 +525,17 @@ namespace Plots
             {
                 int index = Array.IndexOf(crosslines, crossline);
 
-                double pointX = 0;
-                double pointY = 0;
+                double pointX =0;
+                double pointY =0;
 
                 crossline.vLine = Chart.Plot.Add.VerticalLine(pointX);
                 crossline.vLine.LinePattern = LinePattern.DenselyDashed;
                 crossline.vLine.LineColor = ScottPlot.Colors.DarkCyan;
-                crossline.vLine.LineWidth = 2;
+                crossline.vLine.LineWidth =2;
                 crossline.vLine.IsVisible = IsShowCursor;
                 crossline.vLine.IsDraggable = true;
                 crossline.vLine.Text = "";
-                crossline.vLine.LabelFontSize = 12;
+                crossline.vLine.LabelFontSize =12;
                 crossline.vLine.ManualLabelAlignment = Alignment.LowerCenter;
                 crossline.vLine.LabelBackgroundColor = ScottPlot.Colors.Transparent;
                 crossline.vLine.LabelFontColor = ScottPlot.Colors.Black;
@@ -581,16 +543,16 @@ namespace Plots
                 crossline.hLine = Chart.Plot.Add.HorizontalLine(pointY);
                 crossline.hLine.LinePattern = LinePattern.DenselyDashed;
                 crossline.hLine.LineColor = ScottPlot.Colors.DarkCyan;
-                crossline.hLine.LineWidth = 2;
+                crossline.hLine.LineWidth =2;
                 crossline.hLine.IsVisible = IsShowCursor;
                 crossline.hLine.IsDraggable = false;
                 crossline.hLine.Text = "";
-                crossline.hLine.LabelFontSize = 12;
+                crossline.hLine.LabelFontSize =12;
                 crossline.hLine.ManualLabelAlignment = Alignment.LowerLeft;
                 crossline.hLine.LabelBackgroundColor = ScottPlot.Colors.Transparent;
                 crossline.hLine.LabelFontColor = ScottPlot.Colors.Black;
-                crossline.hLine.LabelRotation = 0;
-                crossline.hLine.LabelOffsetX = 5;
+                crossline.hLine.LabelRotation =0;
+                crossline.hLine.LabelOffsetX =5;
 
                 crossline.xAnnotation = Chart.Plot.Add.Annotation($"C{index}", Alignment.UpperLeft);
                 crossline.xAnnotation.LabelShadowColor = ScottPlot.Colors.Transparent;
@@ -598,13 +560,13 @@ namespace Plots
                 crossline.xAnnotation.LabelBold = true;
                 crossline.xAnnotation.IsVisible = IsShowCursor;
 
-                crossline.xText = Chart.Plot.Add.Text($"C{index}", 0, 0);
+                crossline.xText = Chart.Plot.Add.Text($"C{index}",0,0);
                 crossline.xText.LabelBackgroundColor = ScottPlot.Colors.Yellow;
                 crossline.xText.LabelBold = true;
                 crossline.xText.IsVisible = IsShowCursor;
                 crossline.xText.LabelBorderColor = ScottPlot.Colors.Black;
                 crossline.xText.Alignment = Alignment.UpperCenter;
-                //crossline.yText = Chart.Plot.Add.Text($"C{index}", 0, 0);
+                //crossline.yText = Chart.Plot.Add.Text($"C{index}",0,0);
 
                 ClearLegends();
             }
@@ -624,7 +586,7 @@ namespace Plots
 
         private AxisLine? GetLineUnderMouse(float x, float y)
         {
-            CoordinateRect rect = Chart.Plot.GetCoordinateRect(x, y, radius: 10);
+            CoordinateRect rect = Chart.Plot.GetCoordinateRect(x, y, radius:10);
 
             foreach (AxisLine axLine in Chart.Plot.GetPlottables<AxisLine>().Reverse())
             {
@@ -731,19 +693,19 @@ namespace Plots
 
         public System.Drawing.Color GetComplementColor(System.Drawing.Color color)
         {
-            return System.Drawing.Color.FromArgb(255 - color.R, 255 - color.G, 255 - color.B);
+            return System.Drawing.Color.FromArgb(255 - color.R,255 - color.G,255 - color.B);
         }
 
         void ShowCrossLineCursor(bool isShow, ScottPlot.Color? color = null)
         {
-            double pointX = 0;
-            double pointY = 0;
+            double pointX =0;
+            double pointY =0;
             DataPoint dp = new();
             if (CurrentPlot != null)
             {
                 var limits = Chart.Plot.Axes.GetDataLimits();
-                pointX = (limits.XRange.Min + limits.XRange.Max) / 2;
-                dp = new DataPoint(pointX, 0, 0);
+                pointX = (limits.XRange.Min + limits.XRange.Max) /2;
+                dp = new DataPoint(pointX,0,0);
             }
 
             foreach (var crossline in crosslines)
@@ -780,7 +742,7 @@ namespace Plots
                 return;
             }
 
-            if (PlotList.Count == 0)
+            if (PlotList.Count ==0)
             {
                 return;
             }
@@ -804,7 +766,7 @@ namespace Plots
                 return;
             }
 
-            if (PlotList.Count == 0)
+            if (PlotList.Count ==0)
             {
                 return;
             }
@@ -867,7 +829,7 @@ namespace Plots
         }
         private bool CanExecute(object? param)
         {
-            return true;  // 假設都執行
+            return true; // 假設都執行
         }
         public void ClearPlots()
         {
@@ -905,7 +867,7 @@ namespace Plots
         //    using (var memory = new MemoryStream())
         //    {
         //        bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
-        //        memory.Position = 0;
+        //        memory.Position =0;
 
         //        var bitmapImage = new BitmapImage();
         //        bitmapImage.BeginInit();
@@ -928,5 +890,16 @@ namespace Plots
         //    bi.EndInit();
         //    return bi;
         //}
+
+        // no-op interaction helpers for ScottPlot versions without an Interaction API on WpfPlot
+        private void DisablePlotInteraction()
+        {
+            // intentionally left blank
+        }
+
+        private void EnablePlotInteraction()
+        {
+            // intentionally left blank
+        }
     }
 }

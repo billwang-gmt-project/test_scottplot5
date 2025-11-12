@@ -1,5 +1,4 @@
-﻿using OpenTK.Input.Hid;
-using Plots;
+﻿using Plots;
 using System.Configuration;
 using System.Data;
 using System.Windows;
