@@ -1,0 +1,36 @@
+﻿<Application x:Class="test_scottplot5.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:test_scottplot5"
+             xmlns:plot="clr-namespace:Plots"
+                   xmlns:converters="clr-namespace:Converters">
+    <Application.Resources>
+        <!-- Converter -->
+        <converters:NumberToHexString x:Key="NumberToHexString" />
+        <converters:ItemToVisibilityConverter x:Key="ItemToVisibilityConverter"/>
+        <converters:ItemToBoolConverter x:Key="ItemToBoolConverter"/>
+        <converters:DecimalToStringConverter x:Key="DecimalToStringConverter" />
+        <converters:HexFormatConverter x:Key="HexFormatConverter" />
+        <converters:DoubleToUintConverter x:Key="DoubleToUintConverter"/>
+        <converters:NumberFormatConverter x:Key="NumberFormatConverter"/>
+        <converters:SliderFormatConverter x:Key="SliderFormatConverter"/>
+        <converters:IntToBoolConverter x:Key="IntToBoolConverter"/>
+        <converters:BoolToIntConverter x:Key="BoolToIntConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:ItemListToVisibilityConverter x:Key="ItemListToVisibilityConverter"/>
+        <converters:IndexConverter x:Key="IndexConverter" />
+        <converters:BoolInverterConverter x:Key="BoolInverterConverter" />
+        <converters:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converters:IntToColorConverter x:Key="IntToColorConverter" />
+        <converters:DecimalToN3 x:Key="DecimalToN3" />
+
+        <DataTemplate DataType="{x:Type plot:PlotPageViewModel}">
+            <plot:PlotPage/>
+        </DataTemplate>
+        <DataTemplate x:Key="PlotPageViewModel" DataType="{x:Type plot:PlotPageViewModel}">
+            <plot:PlotPage/>
+        </DataTemplate>
+
+    </Application.Resources>
+</Application>

@@ -1,0 +1,76 @@
+﻿<UserControl x:Class="Plots.PlotPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Plots"
+             xmlns:ScottPlot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+             d:Background="White"
+             mc:Ignorable="d">
+    <DockPanel Background="#F5F5F5">
+        <StackPanel DockPanel.Dock="Top" Background="#E8E8E8">
+            <DockPanel DockPanel.Dock="Top" Background="#D3D3D3">
+                <StackPanel DockPanel.Dock="Top" Background="#BEBEBE">
+                    <!-- Controls -->
+                    <DockPanel  Margin="2" Background="#E0E0E0">
+                        <ComboBox ItemsSource="{Binding PlotList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                       DisplayMemberPath ="Name"
+                       SelectedIndex="{Binding PlotIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="2" Background="#FFFFFF"/>
+                        <Button Command="{Binding ShowHidePlotCommand}" Visibility="Visible" Margin="2" Background="#778899">Show/Hide</Button>
+                        <Button Command="{Binding ShowPlotCommand}" Visibility="Collapsed" Margin="2" Background="LightGreen">Show</Button>
+                        <CheckBox  HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IsShowCursor}" Background="#D3D3D3">Cursor</CheckBox>
+                        <CheckBox IsChecked="{Binding IsShowLegend, Mode=TwoWay}" Margin="2" VerticalAlignment="Center" Background="#D3D3D3">Legend</CheckBox>
+                        <CheckBox IsChecked="{Binding IsUpdatePlot, Mode=TwoWay}" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#D3D3D3">Refresh</CheckBox>
+                        <CheckBox IsChecked="{Binding IsYaxisAuto}" VerticalContentAlignment="Center" Margin="2" Background="#D3D3D3">Auto Y Axis</CheckBox>
+                        <Border BorderBrush="Black" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                <CheckBox IsChecked="{Binding IsLimitDisplaySize}">Display Size</CheckBox>
+                                <TextBox Text="{Binding DisplaySize , Mode=TwoWay, UpdateSourceTrigger=LostFocus}"></TextBox>
+                                <TextBlock Text="{Binding DisplayLength}" d:Width="20"/>
+                            </StackPanel>
+                        </Border>
+                    </DockPanel>
+                </StackPanel>
+            </DockPanel>
+            <!-- Axis -->
+            <!--StackPanel Orientation="Horizontal" Background="#E0E0E0">
+                <UniformGrid DockPanel.Dock="Top" Columns="4" Background="#FFFFFF">
+                    <Border BorderBrush="Black" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="2">Y Min.</TextBlock>
+                            <TextBox Text="{Binding YaxisMin}" Width="50" Margin="2"/>
+                        </StackPanel>
+                    </Border>
+                    <Border BorderBrush="Black" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="2">Y Max.</TextBlock>
+                            <TextBox Text="{Binding YaxisMax}" Width="50" Margin="2"/>
+                        </StackPanel>
+                    </Border>
+                    <Border BorderBrush="Black" BorderThickness="1" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="2">X Min.</TextBlock>
+                            <TextBox Text="{Binding XaxisMin}" Width="50" Margin="2"/>
+                        </StackPanel>
+                    </Border>
+                    <Border BorderBrush="Black" BorderThickness="1" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="2">X Max.</TextBlock>
+                            <TextBox Text="{Binding XaxisMax}" Width="50" Margin="2"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+            </StackPanel-->
+        </StackPanel>
+        <!-- Plot  -->
+        <!--ScottPlot:WpfPlot x:Name="PlotChart" x:FieldModifier="public" DockPanel.Dock="Bottom" d:Height="200"/-->
+        <Grid>
+            <!-- Plot -->
+            <ContentControl Content="{Binding Chart}" d:Height="100" Background="#FFFFFF" Grid.Row="0"/>
+            <!-- Axis -->
+            <TextBox Text="{Binding YaxisMax}" Visibility="{Binding IsYaxisAuto, Converter={StaticResource BoolToVisibilityConverter} ,ConverterParameter=invert}" MinWidth="50" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent"/>
+            <TextBox Text="{Binding YaxisMin}" Visibility="{Binding IsYaxisAuto,  Converter={StaticResource BoolToVisibilityConverter} ,ConverterParameter=invert}" MinWidth="50" HorizontalAlignment="Left" VerticalAlignment="Bottom"  Background="Transparent"/>
+        </Grid>
+    </DockPanel>
+
+</UserControl>
