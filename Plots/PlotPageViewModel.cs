@@ -235,6 +235,19 @@ namespace Plots
         VerticalLine? vLineBeingDragged = null;
         HorizontalLine? hLineBeingDragged = null;
 
+        // custom interaction state
+        private bool isPanning = false;
+        private bool isZoomRect = false;
+        private Pixel panStartPixel;
+        private Coordinates panStartCoords;
+        private double origXmin, origXmax, origYmin, origYmax;
+        private Pixel zoomStartPixel;
+        private Coordinates zoomStartCoords;
+
+        private DateTime lastClickTime = DateTime.MinValue;
+        private MouseButton? lastClickButton = null;
+        private const int DoubleClickThresholdMs =500;
+
         public void Init(Window _window, bool clearPlots = true)
         {
             this.window = _window;
@@ -398,10 +411,31 @@ namespace Plots
 
         private void Chart_MouseDown(object? sender, System.Windows.Input.MouseEventArgs e)
         {
-            // sender is the object that raised the event
-            // Get the mouse position
-            //Point position = e.GetPosition(sender as UIElement);
-            Pixel pixelPos = Chart.GetPlotPixelPosition(e);
+            if (Chart == null)
+                return;
+
+            // detect double-click for autoscale
+            var now = DateTime.Now;
+            if (e is MouseButtonEventArgs mbe)
+            {
+                if (mbe.ButtonState == MouseButtonState.Pressed)
+                {
+                    if ((now - lastClickTime).TotalMilliseconds <= DoubleClickThresholdMs && lastClickButton == mbe.ChangedButton)
+                    {
+                        // double click: autoscale
+                        Chart.Plot.Axes.AutoScale();
+                        Chart.Refresh();
+                        lastClickTime = DateTime.MinValue;
+                        lastClickButton = null;
+                        return;
+                    }
+                    lastClickTime = now;
+                    lastClickButton = mbe.ChangedButton;
+                }
+            }
+
+            // find plottable under mouse for dragging (vertical lines etc.)
+            Pixel pixelPos = Chart.GetPlotPixelPosition(e as MouseEventArgs);
             var lineUnderMouse = GetLineUnderMouse((float)pixelPos.X, (float)pixelPos.Y);
             if (lineUnderMouse is not null)
             {
@@ -416,82 +450,185 @@ namespace Plots
                             crosslineIndex = Array.IndexOf(crosslines, crossline);
                         }
                     }
-                    Debug.WriteLine($"index ={crosslineIndex}");
                 }
 
-                // disable panning while dragging - no-op fallback
-                DisablePlotInteraction();
+                // grab mouse so we receive events even if cursor leaves control
+                Chart.CaptureMouse();
+                return;
+            }
+
+            // start pan or zoom-rect depending on button
+            if (e is MouseButtonEventArgs mbe2)
+            {
+                if (mbe2.ChangedButton == MouseButton.Left && mbe2.ButtonState == MouseButtonState.Pressed)
+                {
+                    // start panning
+                    isPanning = true;
+                    panStartPixel = Chart.GetPlotPixelPosition(e as MouseEventArgs);
+                    panStartCoords = Chart.Plot.GetCoordinates(panStartPixel);
+                    var limits = Chart.Plot.Axes.GetLimits();
+                    origXmin = limits.XRange.Min;
+                    origXmax = limits.XRange.Max;
+                    origYmin = limits.YRange.Min;
+                    origYmax = limits.YRange.Max;
+                    Chart.CaptureMouse();
+                }
+                else if (mbe2.ChangedButton == MouseButton.Right && mbe2.ButtonState == MouseButtonState.Pressed)
+                {
+                    // start zoom rectangle (on mouse up we'll set limits)
+                    isZoomRect = true;
+                    zoomStartPixel = Chart.GetPlotPixelPosition(e as MouseEventArgs);
+                    zoomStartCoords = Chart.Plot.GetCoordinates(zoomStartPixel);
+                    Chart.CaptureMouse();
+                }
             }
         }
 
         private void Chart_MouseUp(object? sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (Chart == null)
+                return;
+
+            // release any dragging of vertical/horizontal lines
             PlottableBeingDragged = null;
             vLineBeingDragged = null;
             hLineBeingDragged = null;
-            // enable panning again - no-op fallback
-            EnablePlotInteraction();
+
+            // finish panning
+            if (isPanning)
+            {
+                isPanning = false;
+                Chart.ReleaseMouseCapture();
+                Chart.Refresh();
+                return;
+            }
+
+            // finish zoom rectangle -> set new axis limits
+            if (isZoomRect)
+            {
+                isZoomRect = false;
+                Pixel endPixel = Chart.GetPlotPixelPosition(e as MouseEventArgs);
+                Coordinates endCoords = Chart.Plot.GetCoordinates(endPixel);
+
+                double xmin = Math.Min(zoomStartCoords.X, endCoords.X);
+                double xmax = Math.Max(zoomStartCoords.X, endCoords.X);
+                double ymin = Math.Min(zoomStartCoords.Y, endCoords.Y);
+                double ymax = Math.Max(zoomStartCoords.Y, endCoords.Y);
+
+                // ignore tiny rectangles
+                if (Math.Abs(xmax - xmin) >1e-6 && Math.Abs(ymax - ymin) >1e-6)
+                {
+                    Chart.Plot.Axes.SetLimitsX(xmin, xmax);
+                    Chart.Plot.Axes.SetLimitsY(ymin, ymax);
+                }
+
+                Chart.ReleaseMouseCapture();
+                Chart.Refresh();
+                return;
+            }
+
+            // ensure mouse capture released
+            if (Chart.IsMouseCaptured)
+                Chart.ReleaseMouseCapture();
+
             Chart.Refresh();
         }
 
         private void Chart_MouseMove(object? sender, MouseEventArgs e)
         {
-            if (CurrentPlot == null)
-            {
+            if (Chart == null)
                 return;
-            }
 
-            if (!IsShowCursor)
+            // update cursor tracking and draggable plottables first
+            if (CurrentPlot != null && IsShowCursor)
             {
-                return;
-            }
+                Pixel mousePixel = Chart.GetPlotPixelPosition(e);
+                Coordinates mouseLocation = Chart.Plot.GetCoordinates(mousePixel);
+                DataPoint dp = CurrentPlot.Data.GetNearest(mouseLocation, Chart.Plot.LastRender, (float)Chart.Plot.Axes.GetLimits().XRange.Max);
 
-            // Get the mouse position
-            Pixel mousePixel = Chart.GetPlotPixelPosition(e);
-            Coordinates mouseLocation = Chart.Plot.GetCoordinates(mousePixel);
-            DataPoint dp = CurrentPlot.Data.GetNearest(mouseLocation, Chart.Plot.LastRender, (float)Chart.Plot.Axes.GetLimits().XRange.Max);
+                cursorMarker.X = dp.X;
+                cursorMarker.Y = dp.Y;
+                cursorMarker.Color = CurrentPlot.Color;
+                cursorText.LabelText = $"{dp.X:N4}, {dp.Y:N1}";
+                cursorText.Location = new(dp.X, dp.Y);
 
-            cursorMarker.X = dp.X;
-            cursorMarker.Y = dp.Y;
-            cursorMarker.Color = CurrentPlot.Color;
-            cursorText.LabelText = $"{dp.X:N4}, {dp.Y:N1}";
-            cursorText.Location = new(dp.X, dp.Y);
-
-            if (PlottableBeingDragged != null)
-            {
-                if (PlottableBeingDragged is VerticalLine)
-                {
-                    UpdateCrossLinesPosition(crosslines[crosslineIndex], dp);
-                    UpdateCrossLineText();
-                }
-            }
-
-            foreach (var crossline in crosslines)
-            {
-                crossline.xAnnotation.OffsetX = Chart.Plot.GetPixel(new(crossline.point.Value.X, crossline.point.Value.Y)).X -40;
-            }
-
-
-            crosslineCursorAnnotation!.Text = $"{dp.X:N4}, {dp.Y:N1}\nC0: {crosslines[0]!.point!.Value.X:N4}, {crosslines[0]!.point!.Value.Y:N1}\n" +
-                $"C1: {crosslines[1]!.point!.Value.X:N4}, {crosslines[1]!.point!.Value.Y:N1}\n" +
+                crosslineCursorAnnotation!.Text = $"{dp.X:N4}, {dp.Y:N1}\nC0: {crosslines[0]!.point!.Value.X:N4}, {crosslines[0]!.point!.Value.Y:N1}\n" +
+                 $"C1: {crosslines[1]!.point!.Value.X:N4}, {crosslines[1]!.point!.Value.Y:N1}\n" +
                  $"ΔX: {crosslines[1]!.point!.Value.X - crosslines[0]!.point!.Value.X:N4}\nΔY: {crosslines[1]!.point!.Value.Y - crosslines[0]!.point!.Value.Y:N1}";
+            }
 
-            Chart.Refresh();
+            // dragging plottable (vertical line)
+            if (PlottableBeingDragged != null && PlottableBeingDragged is VerticalLine)
+            {
+                Pixel mousePixel = Chart.GetPlotPixelPosition(e);
+                Coordinates mouseLocation = Chart.Plot.GetCoordinates(mousePixel);
+                DataPoint dp = new(mouseLocation.X, mouseLocation.Y,0);
+                UpdateCrossLinesPosition(crosslines[crosslineIndex], dp);
+                UpdateCrossLineText();
+                Chart.Refresh();
+                return;
+            }
+
+            // panning
+            if (isPanning)
+            {
+                Pixel currentPixel = Chart.GetPlotPixelPosition(e);
+                Coordinates currentCoords = Chart.Plot.GetCoordinates(currentPixel);
+
+                double dx = currentCoords.X - panStartCoords.X;
+                double dy = currentCoords.Y - panStartCoords.Y;
+
+                Chart.Plot.Axes.SetLimitsX(origXmin - dx, origXmax - dx);
+                Chart.Plot.Axes.SetLimitsY(origYmin - dy, origYmax - dy);
+
+                Chart.Refresh();
+                return;
+            }
+
+            // zoom rectangle: optionally show visual feedback - skip drawing for simplicity
+            if (isZoomRect)
+            {
+                // we don't draw the rectangle; visual feedback can be added later
+                return;
+            }
         }
 
         private void Chart_MouseWheel(object? sender, MouseEventArgs e)
         {
-            if (!IsShowCursor)
-            {
+            if (Chart == null)
                 return;
-            }
 
-            foreach (var crossline in crosslines)
+            if (e is MouseWheelEventArgs mwe)
             {
-                crossline.xAnnotation.OffsetX = Chart.Plot.GetPixel(new(crossline.point.Value.X, crossline.point.Value.Y)).X -40;
-            }
+                if (!IsShowCursor)
+                {
+                    return;
+                }
 
+                int delta = mwe.Delta;
+                double zoomFactor = delta >0 ?0.9 :1.1; // <1 = zoom in, >1 = zoom out
+
+                Pixel mousePixel = Chart.GetPlotPixelPosition(e);
+                Coordinates mouseCoords = Chart.Plot.GetCoordinates(mousePixel);
+
+                var limits = Chart.Plot.Axes.GetLimits();
+                double xMin = limits.XRange.Min;
+                double xMax = limits.XRange.Max;
+                double yMin = limits.YRange.Min;
+                double yMax = limits.YRange.Max;
+
+                double newXMin = mouseCoords.X - (mouseCoords.X - xMin) * zoomFactor;
+                double newXMax = mouseCoords.X + (xMax - mouseCoords.X) * zoomFactor;
+                double newYMin = mouseCoords.Y - (mouseCoords.Y - yMin) * zoomFactor;
+                double newYMax = mouseCoords.Y + (yMax - mouseCoords.Y) * zoomFactor;
+
+                Chart.Plot.Axes.SetLimitsX(newXMin, newXMax);
+                Chart.Plot.Axes.SetLimitsY(newYMin, newYMax);
+
+                Chart.Refresh();
+            }
         }
+
         public void InitCursor()
         {
             //ClearAnnotations();
