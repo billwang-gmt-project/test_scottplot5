@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("test_scottplot5")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.8969.557")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ff1eb141a97f22ed1124074fc4a51c9cc0e12270")]
 [assembly: System.Reflection.AssemblyProductAttribute("test_scottplot5")]
 [assembly: System.Reflection.AssemblyTitleAttribute("test_scottplot5")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.8969.557")]
